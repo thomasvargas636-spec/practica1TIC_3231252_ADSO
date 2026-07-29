@@ -8,14 +8,9 @@ function Node(value) {
 
 let decisionThree = null;
 let pcSolutions = [];
-
-let board = [
-  ["", "", ""],
-  ["", "", ""],
-  ["", "", ""],
-];
-
-let turn = 0; //0 user, 1 = pc
+let board = [];
+let turn = 0; // 0 = Jugador 1, 1 = Jugador 2 (PC)
+let gameOver = false;
 
 function renderBoard() {
   const html = board.map((row, rowIndex) => {
@@ -28,7 +23,6 @@ function renderBoard() {
   document.querySelector("#board").innerHTML = html.join("");
 }
 
-startGame();
 
 function startGame() {
   renderBoard();
@@ -41,6 +35,21 @@ function startGame() {
     PCPlaysV2();
   }
 }
+
+function resetGame() {
+  board = [
+    ["", "", ""],
+    ["", "", ""],
+    ["", "", ""],
+  ];
+  turn = 0;
+  gameOver = false;
+  pcSolutions = [];
+  decisionThree = null;
+  startGame();
+}
+
+resetGame();
 
 function renderPlayer() {
   document.querySelector("#player").textContent = `${
@@ -133,7 +142,7 @@ function playerPlays() {
       const row = parseInt(buttonCell.dataset.row);
       const col = parseInt(buttonCell.dataset.col);
 
-      if (board[row][col] !== "") return;
+      if (gameOver || board[row][col] !== "") return;
 
       board[row][col] = "O";
       buttonCell.textContent = board[row][col];
