@@ -1,18 +1,88 @@
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #050409;
+  font-family: "Segoe UI", Arial, sans-serif;
+  color: #e6e1ef;
 }
 
-.board {
+#app {
+  text-align: center;
+  padding: 25px 35px;
+  background: #0b0912;
+  border: 1px solid #241a33;
+  border-radius: 10px;
+}
+
+#player {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 16px;
+  min-height: 24px;
+  color: #a855f7;
+}
+
+#board {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  gap: 5px;
 }
+
 .row {
   display: flex;
+  gap: 5px;
 }
+
 .cell {
-  width: 100px;
-  height: 100px;
-  border: solid 1px black;
-  font-size: 38px;
+  width: 85px;
+  height: 85px;
+  border: 1px solid #241a33;
+  background: #120e1c;
+  font-size: 32px;
   font-weight: bold;
+  color: #fb923c;
+  cursor: pointer;
+}
+
+.cell:hover:not(.filled) {
+  border-color: #a855f7;
+}
+
+.cell.filled {
+  animation: pop-in 0.2s ease-out;
+}
+
+@keyframes pop-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+#message {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 16px;
+  min-height: 26px;
+  color: #fb923c;
+}
+
+#restart-btn {
+  margin-top: 12px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #0b0912;
+  background: #a855f7;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
 }
