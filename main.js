@@ -15,14 +15,14 @@ let gameOver = false;
 function renderBoard() {
   const html = board.map((row, rowIndex) => {
     const cells = row.map((cell, colIndex) => {
-      return `<button class="cell" data-row="${rowIndex}" data-col="${colIndex}">${cell}</button>`;
+      const filledClass = cell !== "" ? "filled" : "";
+      return `<button class="cell ${filledClass}" data-row="${rowIndex}" data-col="${colIndex}">${cell}</button>`;
     });
     return `<div class="row">${cells.join("")}</div>`;
   });
 
   document.querySelector("#board").innerHTML = html.join("");
 }
-
 
 function startGame() {
   renderBoard();
@@ -32,7 +32,7 @@ function startGame() {
   if (turn === 0) {
     playerPlays();
   } else {
-    PCPlaysV2();
+    setTimeout(PCPlaysV2, 600);
   }
 }
 
@@ -46,30 +46,30 @@ function resetGame() {
   gameOver = false;
   pcSolutions = [];
   decisionThree = null;
+  const msg = document.querySelector("#message");
+  if (msg) msg.textContent = "";
   startGame();
 }
 
-resetGame();
-
-function renderPlayer() {
-  document.querySelector("#player").textContent = `${
-    turn === 0 ? "Player turn" : "PC turn"
-  }`;
+function endGame(result) {
+  gameOver = true;
+  renderPlayer();
+  const msg = document.querySelector("#message");
+  if (result === "pcwon") msg.textContent = "¡Ganó el Jugador 2 (PC)!";
+  else if (result === "playerwon") msg.textContent = "¡Ganó el Jugador 1!";
+  else msg.textContent = "Empate.";
 }
 
-function PCPlays() {
-  console.log("PC Plays... ");
+function renderPlayer() {
+  document.querySelector("#player").textContent = gameOver
+    ? ""
+    : `${turn === 0 ? "Turno: Jugador 1" : "Turno: Jugador 2 (PC)"}`;
 }
 
 function PCPlaysV2() {
-  debugger;
-  console.log("PC Plays...V2 ");
-  //create three
   const copy = JSON.parse(JSON.stringify(board));
   const root = new Node(copy);
   processNode(root, true, 0);
-
-  console.log("final", root);
 
   if (pcSolutions.length > 0) {
     let min = 100;
@@ -80,22 +80,39 @@ function PCPlaysV2() {
     }
     pcSolutions = pcSolutions.filter((sol) => sol.level === min);
     const moveIndex = parseInt(Math.random() * (pcSolutions.length - 0) + 0);
-    console.log({ pcSolutions, moveIndex });
     const move = getRoot(pcSolutions[moveIndex]);
-    console.log({ move });
     decisionThree = move;
     board = JSON.parse(JSON.stringify(move.value));
-    console.log({ board });
+    pcSolutions = [];
     turn = 0;
     renderBoard();
     renderPlayer();
     const won = checkIfWinner();
     if (won === "none") {
-      pcSolutions = [];
       playerPlays();
+    } else {
+      endGame(won);
     }
   } else {
-    console.log("Empate...");
+    // No hay jugada ganadora forzada: juega una casilla libre al azar
+    // para que la partida siga hasta ganador o empate.
+    const emptyCells = [];
+    for (let i = 0; i < board.length; i++) {
+      for (let j = 0; j < board[i].length; j++) {
+        if (board[i][j] === "") emptyCells.push([i, j]);
+      }
+    }
+    const [r, c] = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+    board[r][c] = "X";
+    turn = 0;
+    renderBoard();
+    renderPlayer();
+    const won = checkIfWinner();
+    if (won === "none") {
+      playerPlays();
+    } else {
+      endGame(won);
+    }
   }
 }
 
@@ -145,60 +162,55 @@ function playerPlays() {
       if (gameOver || board[row][col] !== "") return;
 
       board[row][col] = "O";
-      buttonCell.textContent = board[row][col];
       turn = 1;
+      renderBoard();
+      renderPlayer();
       const won = checkIfWinner();
       if (won === "none") {
-        PCPlaysV2();
+        setTimeout(PCPlaysV2, 600);
+      } else {
+        endGame(won);
       }
     });
   });
 }
 
-function checkIfWinner() {
-  const PCWon = [
-    board[0][0] === "X" && board[1][1] === "X" && board[2][2] === "X",
-    board[2][0] === "X" && board[1][1] === "X" && board[0][2] === "X",
-    board[0][0] === "X" && board[1][0] === "X" && board[2][0] === "X",
-    board[0][1] === "X" && board[1][1] === "X" && board[2][1] === "X",
-    board[0][2] === "X" && board[1][2] === "X" && board[2][2] === "X",
-    board[0][0] === "X" && board[0][1] === "X" && board[0][2] === "X",
-    board[1][0] === "X" && board[1][1] === "X" && board[1][2] === "X",
-    board[2][0] === "X" && board[2][1] === "X" && board[2][2] === "X",
-  ];
-  const playerWon = [
-    board[0][0] === "O" && board[1][1] === "O" && board[2][2] === "O",
-    board[2][0] === "O" && board[1][1] === "O" && board[0][2] === "O",
-    board[0][0] === "O" && board[1][0] === "O" && board[2][0] === "O",
-    board[0][1] === "O" && board[1][1] === "O" && board[2][1] === "O",
-    board[0][2] === "O" && board[1][2] === "O" && board[2][2] === "O",
-    board[0][0] === "O" && board[0][1] === "O" && board[0][2] === "O",
-    board[1][0] === "O" && board[1][1] === "O" && board[1][2] === "O",
-    board[2][0] === "O" && board[2][1] === "O" && board[2][2] === "O",
-  ];
+const WINNING_LINES = [
+  [[0, 0], [1, 1], [2, 2]],
+  [[0, 2], [1, 1], [2, 0]],
+  [[0, 0], [1, 0], [2, 0]],
+  [[0, 1], [1, 1], [2, 1]],
+  [[0, 2], [1, 2], [2, 2]],
+  [[0, 0], [0, 1], [0, 2]],
+  [[1, 0], [1, 1], [1, 2]],
+  [[2, 0], [2, 1], [2, 2]],
+];
 
-  if (PCWon.includes(true)) {
-    console.log("PC WON");
-    return "pcwon";
+function getWinningMark(matrix) {
+  for (const line of WINNING_LINES) {
+    const [[r1, c1], [r2, c2], [r3, c3]] = line;
+    const value = matrix[r1][c1];
+    if (value && value === matrix[r2][c2] && value === matrix[r3][c3]) {
+      return value;
+    }
   }
-  if (playerWon.includes(true)) {
-    console.log("Player WON");
-    return "playerwon";
-  }
+  return null;
+}
+
+function isBoardFull(matrix) {
+  return matrix.every((row) => row.every((cell) => cell !== ""));
+}
+
+function checkIfWinner() {
+  const mark = getWinningMark(board);
+  if (mark === "X") return "pcwon";
+  if (mark === "O") return "playerwon";
+  if (isBoardFull(board)) return "draw";
   return "none";
 }
+
 function checkIfPCWinner(arr) {
-  const PCWon = [
-    arr[0][0] === "X" && arr[1][1] === "X" && arr[2][2] === "X",
-    arr[2][0] === "X" && arr[1][1] === "X" && arr[0][2] === "X",
-    arr[0][0] === "X" && arr[1][0] === "X" && arr[2][0] === "X",
-    arr[0][1] === "X" && arr[1][1] === "X" && arr[2][1] === "X",
-    arr[0][2] === "X" && arr[1][2] === "X" && arr[2][2] === "X",
-    arr[0][0] === "X" && arr[0][1] === "X" && arr[0][2] === "X",
-    arr[1][0] === "X" && arr[1][1] === "X" && arr[1][2] === "X",
-    arr[2][0] === "X" && arr[2][1] === "X" && arr[2][2] === "X",
-  ];
-  return PCWon.includes(true);
+  return getWinningMark(arr) === "X";
 }
 
 function checkIfPlayerCanWin(arr) {
@@ -223,3 +235,6 @@ function getRoot(node) {
 
   return n;
 }
+
+document.querySelector("#restart-btn").addEventListener("click", resetGame);
+resetGame();
